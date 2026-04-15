@@ -17,7 +17,7 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { QdrantVectorStore } from "@langchain/qdrant";
 import { QdrantClient } from "@qdrant/js-client-rest";
 import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/huggingface_transformers";
-import { search as ddgSearch } from "duck-duck-scrape";
+import { tavily } from "@tavily/core";
 // @ts-ignore — pdf-parse has no types
 import pdfParse from "pdf-parse";
 import neo4j, { type Driver, type Session } from "neo4j-driver";
@@ -64,12 +64,13 @@ try {
 // --- Tools (prompt-based, same approach as Python version) ---
 // LLM outputs JSON like {"tool": "name", "args": {...}}, we parse and execute
 
+const tvly = tavily({ apiKey: process.env.TAVILY_API_KEY! });
+
 async function runWebSearch(query: string): Promise<string> {
   try {
-    const results = await ddgSearch(query, { safeSearch: 0 });
-    const top = results.results.slice(0, 3);
-    if (!top.length) return "No results found.";
-    return top.map((r) => `- ${r.title}: ${r.description}`).join("\n");
+    const response = await tvly.search(query, { maxResults: 3 });
+    if (!response.results.length) return "No results found.";
+    return response.results.map((r) => `- ${r.title}: ${r.content}`).join("\n");
   } catch (e: any) {
     return `Search failed: ${e.message}`;
   }
@@ -81,6 +82,7 @@ function runCalculator(expression: string): string {
     return "Error: only numbers and +-*/.() are allowed.";
   }
   try {
+    console.log("expression", expression);
     // Function constructor is safer than eval — no access to outer scope
     const result = new Function(`return (${expression})`)();
     return String(result);
@@ -112,12 +114,15 @@ const TOOL_DESCRIPTIONS = `You have access to these tools. To use one, respond w
 
 Tools:
 - web_search(query: str): Search the internet for current information not in the PDF.
-- calculator(expression: str): Evaluate math. Examples: "2 + 2", "(52340 * 0.15)", "2 ** 8"
+- calculator(expression: str): Evaluate math. Examples: "2 + 2", "(52340 * 0.15)", "2 ** 8" don't accept string this will break tool flow
 - search_pdf(query: str): Re-search the PDF with a different/more specific query.
 
 Rules:
-- If you need a tool, respond with ONLY the JSON block. No other text.
-- If you can answer directly, just respond normally with text. No JSON.
+- ALWAYS use the calculator tool for ANY math, even simple arithmetic. Never compute math yourself.
+- ALWAYS use web_search for ANY question about current events, real-time data, or facts you're not 100% certain about.
+- ALWAYS use search_pdf when a PDF is loaded and the question could relate to its content.
+- When using a tool, respond with ONLY the JSON block. No other text.
+- Only answer directly (no JSON) when the question is purely conversational and needs no computation, search, or PDF lookup.
 - Never wrap tool calls in XML tags or any other format.`;
 
 // Scan LLM text output for a JSON tool call
@@ -126,6 +131,7 @@ function parseToolCall(
 ): { tool: string; args: Record<string, string> } | null {
   // Try ```json { ... } ``` first
   const codeBlock = text.match(/```(?:json)?\s*(\{.*?\})\s*```/s);
+
   if (codeBlock) {
     try {
       const parsed = JSON.parse(codeBlock[1]);
@@ -246,7 +252,6 @@ async function executeTools(state: typeof AgentState.State) {
   if (!toolCall) {
     return { messages: [], toolsUsed: [] };
   }
-
   const toolName = toolCall.tool;
   const func = TOOL_MAP[toolName];
 
@@ -261,6 +266,7 @@ async function executeTools(state: typeof AgentState.State) {
   const resultMsg = new HumanMessage(
     `Tool result from ${toolName}:\n${resultText}\n\nNow answer the original question using this information.`,
   );
+  console.log("toolCall :>> ", toolCall, content, lastMsg, resultMsg, func);
 
   return {
     messages: [resultMsg],
@@ -275,7 +281,7 @@ function routeAgent(state: typeof AgentState.State): "use_tools" | "done" {
   const content = typeof last.content === "string" ? last.content : "";
   const hasToolCall = parseToolCall(content) !== null;
   const underLimit = (state.iterations ?? 0) < MAX_ITERATIONS;
-
+  console.log("underLimit :>> ", underLimit, hasToolCall, content, last);
   return hasToolCall && underLimit ? "use_tools" : "done";
 }
 
