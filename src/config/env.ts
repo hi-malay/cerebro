@@ -5,6 +5,7 @@ export interface Config {
   isVercel: boolean;
   groqApiKey: string;
   tavilyApiKey: string;
+  geminiApiKey: string | null;
   qdrantUrl: string | null;
   qdrantApiKey: string | null;
   qdrantCollection: string;
@@ -25,6 +26,7 @@ export const config: Config = {
   isVercel: Boolean(process.env.VERCEL),
   groqApiKey: requireEnv("GROQ_API_KEY"),
   tavilyApiKey: requireEnv("TAVILY_API_KEY"),
+  geminiApiKey: process.env.GEMINI_API_KEY || null,
   qdrantUrl: process.env.QDRANT_URL || null,
   qdrantApiKey: process.env.QDRANT_API_KEY || null,
   qdrantCollection: process.env.QDRANT_COLLECTION || "pdf_docs",

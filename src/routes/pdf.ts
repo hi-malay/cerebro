@@ -38,11 +38,11 @@ router.post("/upload-pdf", upload.single("file"), async (req, res) => {
     });
     const docs = await splitter.createDocuments([pdf.text]);
 
-    const { HuggingFaceTransformersEmbeddings } = await import(
-      "@langchain/community/embeddings/huggingface_transformers"
-    );
-    const embeddings = new HuggingFaceTransformersEmbeddings({
-      model: "Xenova/all-MiniLM-L6-v2",
+    const { GoogleGenerativeAIEmbeddings } =
+      await import("@langchain/google-genai");
+    const embeddings = new GoogleGenerativeAIEmbeddings({
+      model: "text-embedding-004",
+      apiKey: config.geminiApiKey!,
     });
 
     const qdrantClient = getQdrantClient();
@@ -52,7 +52,7 @@ router.post("/upload-pdf", upload.single("file"), async (req, res) => {
       await qdrantClient.deleteCollection(collectionName);
     }
     await qdrantClient.createCollection(collectionName, {
-      vectors: { size: 384, distance: "Cosine" },
+      vectors: { size: 768, distance: "Cosine" },
     });
 
     const vectorStore = await QdrantVectorStore.fromExistingCollection(
