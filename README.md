@@ -19,7 +19,7 @@ User question
      │                                        
      ▼                                        
   Use a tool:                                 
-  • web_search — DuckDuckGo                   
+  • web_search — Tavily                       
   • calculator — math expressions             
   • search_pdf — re-search with better query  
      │                                        
@@ -31,25 +31,59 @@ The agent decides which tools to use and when. No hardcoded `if/else` — the LL
 ## Stack
 
 - **LangGraph** — state machine for the ReAct pipeline
-- **Groq** — LLM inference (Llama 3.3 70B)
+- **Groq** — LLM inference (Llama 3.3 70B for reasoning, Llama 3.1 8B for memory extraction)
 - **Qdrant** — vector database for PDF similarity search
-- **Neo4j** — knowledge graph (optional)
+- **Neo4j** — knowledge graph + chat history (optional, no PDF storage)
 - **HuggingFace Transformers** — local embeddings (all-MiniLM-L6-v2)
 - **Express** — REST API
 - **TypeScript**
+
+## Project structure
+
+```
+src/
+├── app.ts                    # Express factory
+├── server.ts                 # Local dev entry point
+├── config/env.ts             # Typed env config
+├── routes/
+│   ├── chat.ts               # POST /chat
+│   ├── pdf.ts                # POST /upload-pdf, POST /reset-rag
+│   ├── session.ts            # DELETE /session/:id
+│   └── status.ts             # GET /status
+├── agent/
+│   ├── state.ts              # LangGraph state definition
+│   ├── nodes.ts              # Graph nodes: retrieve, reason, tools
+│   ├── router.ts             # Conditional edge routing
+│   └── graph.ts              # StateGraph build + compile
+├── tools/
+│   ├── registry.ts           # Tool map, descriptions, parser
+│   ├── web-search.ts         # Tavily web search
+│   ├── calculator.ts         # Safe math eval
+│   └── search-pdf.ts         # Qdrant retriever
+├── memory/
+│   ├── types.ts              # Entity, relation, graph types
+│   └── extractor.ts          # LLM-based entity extraction
+├── neo4j/
+│   ├── client.ts             # Driver, session, schema init
+│   ├── queries.ts            # Cypher templates
+│   ├── repository.ts         # Chat + memory CRUD
+│   └── utils.ts              # Record formatting
+├── qdrant/client.ts          # Qdrant client + RAG state
+└── llm/client.ts             # Groq LLM instances
+```
 
 ## Setup
 
 ```bash
 # 1. Start Qdrant
-docker compose -f ../agentic_ai/docker-compose.yml up -d
+docker compose up -d
 
 # 2. Install
 npm install
 
 # 3. Environment variables
 cp .env.example .env
-# fill in GROQ_API_KEY (required), NEO_* (optional)
+# fill in GROQ_API_KEY, TAVILY_API_KEY (required), NEO_* (optional)
 
 # 4. Run
 npm run dev
@@ -99,27 +133,26 @@ Omit `session_id` to start a new session. Pass it back for follow-up questions.
 
 ## Tools
 
-The agent has 3 tools it can choose to use:
-
 | Tool | When the agent uses it |
 |------|----------------------|
 | `web_search` | Needs current info, external facts, or PDF lacks the answer |
 | `calculator` | Math involved — LLMs can't compute, so they delegate |
 | `search_pdf` | Initial PDF search wasn't specific enough, retries with refined keywords |
 
-Tool calling is **prompt-based** — the LLM outputs `{"tool": "name", "args": {...}}` as JSON, we parse and execute it. This works with any model (no API-level tool calling required).
+Tool calling is **prompt-based** — the LLM outputs `{"tool": "name", "args": {...}}` as JSON, we parse and execute it.
 
 ## .env
 
 ```
 GROQ_API_KEY=your_key_here       # required
+TAVILY_API_KEY=your_key_here     # required
 NEO_URL=neo4j+s://...            # optional
 NEO_USER=your_user               # optional
 NEO_PASSWORD=your_password       # optional
 PORT=8001                        # default 8000
 ```
 
-Neo4j is optional — server starts and works without it.
+Neo4j is optional — server starts and works without it. When connected, it stores chat history and extracted knowledge graph entities (LLM-based extraction).
 
 ## Python version
 
