@@ -41,7 +41,7 @@ router.post("/upload-pdf", upload.single("file"), async (req, res) => {
     const { GoogleGenerativeAIEmbeddings } =
       await import("@langchain/google-genai");
     const embeddings = new GoogleGenerativeAIEmbeddings({
-      model: "text-embedding-004",
+      model: "gemini-embedding-001",
       apiKey: config.geminiApiKey!,
     });
 
@@ -52,7 +52,7 @@ router.post("/upload-pdf", upload.single("file"), async (req, res) => {
       await qdrantClient.deleteCollection(collectionName);
     }
     await qdrantClient.createCollection(collectionName, {
-      vectors: { size: 768, distance: "Cosine" },
+      vectors: { size: 3072, distance: "Cosine" },
     });
 
     const vectorStore = await QdrantVectorStore.fromExistingCollection(

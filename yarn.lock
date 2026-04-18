@@ -35,10 +35,10 @@
     zod "^3.25.32"
     zod-to-json-schema "^3.22.3"
 
-"@langchain/google-genai@^2.1.27":
-  version "2.1.27"
-  resolved "https://registry.npmjs.org/@langchain/google-genai/-/google-genai-2.1.27.tgz"
-  integrity sha512-KCmSrOopY8dF7RweK6NpXU0qSJrrmTkv6aD4b2UJZ45jzyNwEW/tp8jQV6Ljc9e3C402fuNtjpiAjTi7KL0fZQ==
+"@langchain/google-genai@^0.2.18":
+  version "0.2.18"
+  resolved "https://registry.npmjs.org/@langchain/google-genai/-/google-genai-0.2.18.tgz"
+  integrity sha512-m9EiN3VKC01A7/625YQ6Q1Lqq8zueewADX4W5Tcme4RImN75zkg2Z7FYbD1Fo6Zwolc4wBNO6LUtbg3no4rv1Q==
   dependencies:
     "@google/generative-ai" "^0.24.0"
     uuid "^11.1.0"
