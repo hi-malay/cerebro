@@ -1,6 +1,6 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { extractionLlm } from "../llm/client";
-import type { MemoryEntity, MemoryGraph } from "./types";
+import { extractionLlm } from "../llm/client.js";
+import type { MemoryEntity, MemoryGraph } from "./types.js";
 
 const EMPTY_GRAPH: MemoryGraph = { entities: [], relations: [] };
 

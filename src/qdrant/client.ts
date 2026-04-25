@@ -1,6 +1,6 @@
 import { QdrantVectorStore } from "@langchain/qdrant";
 import { QdrantClient } from "@qdrant/js-client-rest";
-import { config } from "../config/env";
+import { config } from "../config/env.js";
 
 export const ragState: {
   enabled: boolean;

@@ -5,8 +5,8 @@ import fs from "fs";
 import pdfParse from "pdf-parse";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { QdrantVectorStore } from "@langchain/qdrant";
-import { config } from "../config/env";
-import { ragState, getQdrantClient } from "../qdrant/client";
+import { config } from "../config/env.js";
+import { ragState, getQdrantClient } from "../qdrant/client.js";
 
 fs.mkdirSync("/tmp/uploads", { recursive: true });
 const upload = multer({ dest: "/tmp/uploads/" });

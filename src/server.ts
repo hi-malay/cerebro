@@ -1,6 +1,6 @@
-import { config } from "./config/env";
-import { shutdown } from "./neo4j/client";
-import app from "./app";
+import { config } from "./config/env.js";
+import { shutdown } from "./neo4j/client.js";
+import app from "./app.js";
 
 if (!config.isVercel) {
   app.listen(config.port, () => {

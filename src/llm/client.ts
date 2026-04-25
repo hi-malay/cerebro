@@ -1,5 +1,5 @@
 import { ChatGroq } from "@langchain/groq";
-import { config } from "../config/env";
+import { config } from "../config/env.js";
 
 export const llm = new ChatGroq({
   model: "llama-3.3-70b-versatile",

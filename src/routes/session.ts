@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { sessions } from "./chat";
+import { sessions } from "./chat.js";
 
 const router = Router();
 

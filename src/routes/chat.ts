@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { appGraph } from "../agent/graph";
-import * as neo4jClient from "../neo4j/client";
-import { saveChatTurn } from "../neo4j/repository";
-import { extractMemoryGraph } from "../memory/extractor";
+import { appGraph } from "../agent/graph.js";
+import * as neo4jClient from "../neo4j/client.js";
+import { saveChatTurn } from "../neo4j/repository.js";
+import { extractMemoryGraph } from "../memory/extractor.js";
 
 export const sessions = new Map<string, string>();
 

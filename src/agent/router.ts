@@ -1,5 +1,5 @@
-import { parseToolCall } from "../tools/registry";
-import { AgentState } from "./state";
+import { parseToolCall } from "../tools/registry.js";
+import { AgentState } from "./state.js";
 
 const MAX_ITERATIONS = 5;
 

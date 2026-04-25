@@ -1,5 +1,5 @@
 import type { Session } from "neo4j-driver";
-import type { ChatTurnPayload } from "../memory/types";
+import type { ChatTurnPayload } from "../memory/types.js";
 import {
   CREATE_CHAT_MESSAGE,
   LINK_SESSION_TO_MEMORY_NODES,
@@ -8,8 +8,8 @@ import {
   MERGE_MEMORY_RELATIONS,
   SEARCH_CHAT_CONTEXT,
   SEARCH_MEMORY_CONTEXT,
-} from "./queries";
-import { formatMemoryRecords } from "./utils";
+} from "./queries.js";
+import { formatMemoryRecords } from "./utils.js";
 
 function escapeLucene(query: string): string {
   return query.replace(/[+\-&|!(){}[\]^"~*?:\\/]/g, "\\$&");

@@ -1,11 +1,11 @@
 import neo4j, { type Driver, type Session } from "neo4j-driver";
-import { config } from "../config/env";
+import { config } from "../config/env.js";
 import {
   ENSURE_CHAT_MESSAGE_CONSTRAINT,
   ENSURE_MEMORY_NODE_CONSTRAINT,
   CREATE_CHAT_FULLTEXT_INDEX,
   CREATE_MEMORY_FULLTEXT_INDEX,
-} from "./queries";
+} from "./queries.js";
 
 let driver: Driver | null = null;
 let session: Session | null = null;

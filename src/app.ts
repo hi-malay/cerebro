@@ -1,10 +1,10 @@
 import express from "express";
 import cors from "cors";
-import { initNeo4j } from "./neo4j/client";
-import chatRouter from "./routes/chat";
-import pdfRouter from "./routes/pdf";
-import sessionRouter from "./routes/session";
-import statusRouter from "./routes/status";
+import { initNeo4j } from "./neo4j/client.js";
+import chatRouter from "./routes/chat.js";
+import pdfRouter from "./routes/pdf.js";
+import sessionRouter from "./routes/session.js";
+import statusRouter from "./routes/status.js";
 
 await initNeo4j();
 

@@ -1,9 +1,9 @@
 import { Router } from "express";
-import * as neo4jClient from "../neo4j/client";
-import { ragState } from "../qdrant/client";
-import { TOOL_MAP } from "../tools/registry";
-import { config } from "../config/env";
-import { sessions } from "./chat";
+import * as neo4jClient from "../neo4j/client.js";
+import { ragState } from "../qdrant/client.js";
+import { TOOL_MAP } from "../tools/registry.js";
+import { config } from "../config/env.js";
+import { sessions } from "./chat.js";
 
 const router = Router();
 

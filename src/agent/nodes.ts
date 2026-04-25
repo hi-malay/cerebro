@@ -1,10 +1,10 @@
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
-import { llm } from "../llm/client";
-import { ragState } from "../qdrant/client";
-import * as neo4jClient from "../neo4j/client";
-import { searchGraphContext } from "../neo4j/repository";
-import { TOOL_MAP, TOOL_DESCRIPTIONS, parseToolCall } from "../tools/registry";
-import { AgentState } from "./state";
+import { llm } from "../llm/client.js";
+import { ragState } from "../qdrant/client.js";
+import * as neo4jClient from "../neo4j/client.js";
+import { searchGraphContext } from "../neo4j/repository.js";
+import { TOOL_MAP, TOOL_DESCRIPTIONS, parseToolCall } from "../tools/registry.js";
+import { AgentState } from "./state.js";
 
 export async function retrieve(state: typeof AgentState.State) {
   if (!ragState.enabled || !ragState.retriever) {

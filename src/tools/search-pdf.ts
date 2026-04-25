@@ -1,4 +1,4 @@
-import { ragState } from "../qdrant/client";
+import { ragState } from "../qdrant/client.js";
 
 export async function runSearchPdf(query: string): Promise<string> {
   if (!ragState.enabled || !ragState.retriever) {

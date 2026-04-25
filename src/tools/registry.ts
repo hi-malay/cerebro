@@ -1,6 +1,6 @@
-import { runWebSearch } from "./web-search";
-import { runCalculator } from "./calculator";
-import { runSearchPdf } from "./search-pdf";
+import { runWebSearch } from "./web-search.js";
+import { runCalculator } from "./calculator.js";
+import { runSearchPdf } from "./search-pdf.js";
 
 export const TOOL_MAP: Record<string, (arg: string) => Promise<string> | string> = {
   web_search: runWebSearch,
