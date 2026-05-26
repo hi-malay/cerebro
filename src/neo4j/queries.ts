@@ -20,6 +20,21 @@ export const CREATE_MEMORY_FULLTEXT_INDEX = `
   ON EACH [n.name]
 `;
 
+// --- Chat history load (most recent N messages for a session) ---
+// Limit is inlined; some Neo4j versions need toInteger($limit) for parameterised limits.
+export const LOAD_RECENT_CHAT_HISTORY = `
+  MATCH (s:ChatSession {id: $sessionId})-[:HAS_MESSAGE]->(m:ChatMessage)
+  RETURN m.question AS question, m.answer AS answer, m.createdAt AS createdAt
+  ORDER BY m.createdAt DESC
+  LIMIT 20
+`;
+
+export const DELETE_CHAT_SESSION = `
+  MATCH (s:ChatSession {id: $sessionId})
+  OPTIONAL MATCH (s)-[:HAS_MESSAGE]->(m:ChatMessage)
+  DETACH DELETE s, m
+`;
+
 // --- Chat session & message writes ---
 
 export const MERGE_CHAT_SESSION =

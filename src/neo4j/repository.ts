@@ -3,6 +3,7 @@ import type { ChatTurnPayload } from "../memory/types.js";
 import {
   CREATE_CHAT_MESSAGE,
   LINK_SESSION_TO_MEMORY_NODES,
+  LOAD_RECENT_CHAT_HISTORY,
   MERGE_CHAT_SESSION,
   MERGE_MEMORY_NODES,
   MERGE_MEMORY_RELATIONS,
@@ -13,6 +14,23 @@ import { formatMemoryRecords } from "./utils.js";
 
 function escapeLucene(query: string): string {
   return query.replace(/[+\-&|!(){}[\]^"~*?:\\/]/g, "\\$&");
+}
+
+// Load recent chat turns for a session as the "Human: ...\nAssistant: ...\n"
+// string format that agentReason already consumes.
+export async function loadChatHistory(
+  session: Session,
+  sessionId: string,
+  limit = 10,
+): Promise<string> {
+  const result = await session.run(LOAD_RECENT_CHAT_HISTORY, { sessionId });
+  const rows = result.records
+    .slice(0, limit)
+    .reverse() // back to chronological order
+    .map(
+      (r) => `Human: ${r.get("question")}\nAssistant: ${r.get("answer")}\n`,
+    );
+  return rows.join("");
 }
 
 export async function saveChatTurn(

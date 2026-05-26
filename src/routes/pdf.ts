@@ -7,13 +7,14 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { QdrantVectorStore } from "@langchain/qdrant";
 import { config } from "../config/env.js";
 import { ragState, getQdrantClient } from "../qdrant/client.js";
+import { uploadLimiter } from "../middleware/rateLimit.js";
 
 fs.mkdirSync("/tmp/uploads", { recursive: true });
 const upload = multer({ dest: "/tmp/uploads/" });
 
 const router = Router();
 
-router.post("/upload-pdf", upload.single("file"), async (req, res) => {
+router.post("/upload-pdf", uploadLimiter, upload.single("file"), async (req, res) => {
   const file = req.file;
   if (!file || !file.originalname.endsWith(".pdf")) {
     res.status(400).json({ error: "Only PDF files are accepted." });

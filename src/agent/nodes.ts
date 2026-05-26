@@ -15,12 +15,15 @@ export async function retrieve(state: typeof AgentState.State) {
 }
 
 export async function graphRetrieve(state: typeof AgentState.State) {
-  const session = neo4jClient.getSession();
-  if (!neo4jClient.isConnected() || !session) {
+  if (!neo4jClient.isConnected()) {
     return { graphContext: "" };
   }
   try {
-    return { graphContext: await searchGraphContext(session, state.question) };
+    return {
+      graphContext: await neo4jClient.withSession((s) =>
+        searchGraphContext(s, state.question),
+      ),
+    };
   } catch {
     return { graphContext: "" };
   }

@@ -1,0 +1,119 @@
+{
+  "info": {
+    "name": "Cerebro API",
+    "description": "Agentic AI backend — chat, RAG (PDF), session management. Local default: http://localhost:8000",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "GET /status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/status",
+          "host": ["{{baseUrl}}"],
+          "path": ["status"]
+        },
+        "description": "Health + config: rag_enabled, neo4j_connected, available tools. No auth, not rate-limited."
+      }
+    },
+    {
+      "name": "POST /chat",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/chat",
+          "host": ["{{baseUrl}}"],
+          "path": ["chat"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"question\": \"What can you help me with?\",\n  \"session_id\": \"demo-session-1\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "description": "Send a question. session_id is optional — server generates one if absent. Rate-limited: 20 req/min/IP."
+      }
+    },
+    {
+      "name": "POST /chat (no session_id)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/chat",
+          "host": ["{{baseUrl}}"],
+          "path": ["chat"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"question\": \"Hello\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "description": "First message in a new session. Response will include a generated session_id to reuse for follow-ups."
+      }
+    },
+    {
+      "name": "POST /upload-pdf",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/upload-pdf",
+          "host": ["{{baseUrl}}"],
+          "path": ["upload-pdf"]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "",
+              "description": "PDF file to ingest into Qdrant. Required."
+            }
+          ]
+        },
+        "description": "Upload a PDF for RAG. Chunks it, embeds via Gemini, stores in Qdrant. Rate-limited: 5 req/10min/IP. Currently wipes the previous collection on every upload."
+      }
+    },
+    {
+      "name": "POST /reset-rag",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/reset-rag",
+          "host": ["{{baseUrl}}"],
+          "path": ["reset-rag"]
+        },
+        "description": "Disable RAG. Drops the in-memory retriever state, server falls back to plain chat."
+      }
+    },
+    {
+      "name": "DELETE /session/:sessionId",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/session/demo-session-1",
+          "host": ["{{baseUrl}}"],
+          "path": ["session", "demo-session-1"]
+        },
+        "description": "Delete a session and all its messages from Neo4j. Replace demo-session-1 with the real session id."
+      }
+    }
+  ]
+}

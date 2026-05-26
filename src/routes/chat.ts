@@ -1,14 +1,13 @@
 import { Router } from "express";
 import { appGraph } from "../agent/graph.js";
 import * as neo4jClient from "../neo4j/client.js";
-import { saveChatTurn } from "../neo4j/repository.js";
+import { loadChatHistory, saveChatTurn } from "../neo4j/repository.js";
 import { extractMemoryGraph } from "../memory/extractor.js";
-
-export const sessions = new Map<string, string>();
+import { chatLimiter } from "../middleware/rateLimit.js";
 
 const router = Router();
 
-router.post("/chat", async (req, res) => {
+router.post("/chat", chatLimiter, async (req, res) => {
   try {
     const { question, session_id } = req.body;
     if (!question) {
@@ -17,7 +16,11 @@ router.post("/chat", async (req, res) => {
     }
 
     const sessionId = session_id || crypto.randomUUID();
-    const chatHistory = sessions.get(sessionId) || "";
+
+    // Load history from Neo4j so context survives cold starts.
+    const chatHistory = neo4jClient.isConnected()
+      ? await neo4jClient.withSession((s) => loadChatHistory(s, sessionId))
+      : "";
 
     const result = await appGraph.invoke({
       question,
@@ -31,25 +34,21 @@ router.post("/chat", async (req, res) => {
     });
 
     const answer = result.answer;
-    sessions.set(
-      sessionId,
-      chatHistory + `Human: ${question}\nAssistant: ${answer}\n`,
-    );
-
     const toolsUsed = result.toolsUsed || [];
 
-    // Fire-and-forget: extract memory + save to Neo4j
+    // Fire-and-forget: extract memory + persist chat turn to Neo4j.
     if (neo4jClient.isConnected()) {
-      const session = neo4jClient.getSession()!;
       extractMemoryGraph(question, answer, chatHistory)
         .then((memoryGraph) =>
-          saveChatTurn(session, {
-            sessionId,
-            question,
-            answer,
-            toolsUsed,
-            memoryGraph,
-          }),
+          neo4jClient.withSession((s) =>
+            saveChatTurn(s, {
+              sessionId,
+              question,
+              answer,
+              toolsUsed,
+              memoryGraph,
+            }),
+          ),
         )
         .catch((err) => console.error("Memory save failed:", err.message));
     }

@@ -8,8 +8,14 @@ import {
 } from "./queries.js";
 
 let driver: Driver | null = null;
-let session: Session | null = null;
 let connected = false;
+
+function openSession(): Session {
+  if (!driver) throw new Error("Neo4j driver not initialized");
+  return config.neo4jDatabase
+    ? driver.session({ database: config.neo4jDatabase })
+    : driver.session();
+}
 
 export async function initNeo4j(): Promise<void> {
   try {
@@ -19,16 +25,18 @@ export async function initNeo4j(): Promise<void> {
         neo4j.auth.basic(config.neo4jUser, config.neo4jPassword),
       );
       await driver.getServerInfo();
-      session = config.neo4jDatabase
-        ? driver.session({ database: config.neo4jDatabase })
-        : driver.session();
       connected = true;
 
-      // Create constraints and indexes once at startup
-      await session.run(ENSURE_CHAT_MESSAGE_CONSTRAINT);
-      await session.run(ENSURE_MEMORY_NODE_CONSTRAINT);
-      await session.run(CREATE_CHAT_FULLTEXT_INDEX);
-      await session.run(CREATE_MEMORY_FULLTEXT_INDEX);
+      // One-shot session for startup constraints/indexes
+      const session = openSession();
+      try {
+        await session.run(ENSURE_CHAT_MESSAGE_CONSTRAINT);
+        await session.run(ENSURE_MEMORY_NODE_CONSTRAINT);
+        await session.run(CREATE_CHAT_FULLTEXT_INDEX);
+        await session.run(CREATE_MEMORY_FULLTEXT_INDEX);
+      } finally {
+        await session.close();
+      }
 
       console.log(
         `Neo4j connected${config.neo4jDatabase ? ` (database: ${config.neo4jDatabase})` : " (using home database)"}.`,
@@ -45,11 +53,19 @@ export function isConnected(): boolean {
   return connected;
 }
 
-export function getSession(): Session | null {
-  return session;
+// Neo4j sessions are not safe for concurrent statements.
+// Always open a fresh session per request via this helper.
+export async function withSession<T>(
+  fn: (session: Session) => Promise<T>,
+): Promise<T> {
+  const session = openSession();
+  try {
+    return await fn(session);
+  } finally {
+    await session.close();
+  }
 }
 
 export async function shutdown(): Promise<void> {
-  if (session) await session.close();
   if (driver) await driver.close();
 }
